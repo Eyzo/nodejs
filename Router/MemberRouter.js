@@ -13,7 +13,7 @@ router.use((req, res, next) => {
 });
 
 router.get('/', (req, res) => {
-  res.json(utils.responseSuccess('Résultats', members));
+  return res.json(utils.responseSuccess('Résultats', members));
 });
 
 router.post('/create', (req, res) => {
@@ -26,28 +26,46 @@ router.post('/create', (req, res) => {
   fs.writeFile('./Data/members.json', data, (err) => {
     res.json(utils.responseSuccess('Ajout bien effectué', members));
   });
+  return;
 });
 router.put('/update/:id', (req, res) => {
   const {id} = req.params;
   const member = members[id - 1];
   const {first_name, last_name} = req.body
-  member.first_name = first_name;
-  member.last_name = last_name;
-  const data = JSON.stringify(members);
-  fs.writeFile('./Data/members.json', data, (err) => {
-    res.json(utils.responseSuccess('Modification bien effectué', members));
-  });
+  if (member) {
+    member.first_name = first_name;
+    member.last_name = last_name;
+    const data = JSON.stringify(members);
+    fs.writeFile('./Data/members.json', data, (err) => {
+      res.json(utils.responseSuccess('Modification bien effectué', members));
+    });
+    return;
+  }
+  return res.json(utils.responseError("L'utilisateur recherché n'existe pas", member));
 });
 
 router.delete('/delete/:id', (req, res) => {
   const {id} = req.params;
   const data = JSON.stringify(members);
-  members.splice(id - 1, 1);
-  console.log(members);
-  // fs.writeFile('./Data/members.json', data, (err) => {
-  //   res.json(utils.responseSuccess('Modification bien effectué', members));
-  // });
-  res.json('ok');
+  const member = members[id - 1];
+  console.log(member);
+  if (member) {
+    members.splice(id - 1, 1);
+    fs.writeFile('./Data/members.json', data, (err) => {
+      res.json(utils.responseSuccess(`L'utilisateur ${id} à bien été supprimé`, members));
+    });
+    return;
+  }
+  return res.json(utils.responseError("L'utilisateur recherché n'existe pas", member));
+});
+
+router.get('/:id', (req, res) => {
+  const {id} = req.params;
+  const member = members[id - 1];
+  if (member) {
+    return res.json(utils.responseSuccess('Utilisateur', member));
+  }
+  return res.json(utils.responseError("L'utilisateur recherché n'existe pas", member));
 });
 
 module.exports = router;
